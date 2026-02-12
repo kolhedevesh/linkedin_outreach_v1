@@ -2,15 +2,15 @@
 
 AI-powered LinkedIn outreach tool that helps you:
 
-🔍 Find relevant LinkedIn profiles
-
-✍️ Generate personalized connection messages
-
-🎯 Target by role, industry, location, seniority
-
-🤖 Use LLMs for intelligent personalization
-
-🧪 Switch between Demo Mode and Real LinkedIn Search
+    🔍 Find relevant LinkedIn profiles
+    
+    ✍️ Generate personalized connection messages
+    
+    🎯 Target by role, industry, location, seniority
+    
+    🤖 Use LLMs for intelligent personalization
+    
+    🧪 Switch between Demo Mode and Real LinkedIn Search
 
 Built as an MVP to enable high-quality networking for professionals exploring career opportunities.
 
@@ -18,35 +18,36 @@ Built as an MVP to enable high-quality networking for professionals exploring ca
 
 Cold LinkedIn outreach is:
 
-Time consuming
-
-Hard to personalize at scale
-
-Often generic and spammy
+    Time consuming
+    
+    Hard to personalize at scale
+    
+    Often generic and spammy
 
 This tool helps generate:
 
-Context-aware
-
-Role-relevant
-
-Industry-specific
-
-Career-focused outreach messages
+    Context-aware
+    
+    Role-relevant
+    
+    Industry-specific
+    
+    Career-focused outreach messages
 
 Designed especially for:
 
-Job seekers
-
-Career switchers
-
-AI PM aspirants
-
-Founders exploring connections
+    Job seekers
+    
+    Career switchers
+    
+    AI PM aspirants
+    
+    Founders exploring connections
 
 🖥 Demo UI (Streamlit)
 
 The app includes:
+
 
 1️⃣ Search & Filters Tab
 
@@ -72,6 +73,7 @@ Mode:
 
 🧪 Demo Mode (Simulated profiles)
 
+
 2️⃣ Outreach Settings Tab
 
 Primary goal
@@ -89,6 +91,7 @@ Problems solved
 Key achievements
 
 Personalization slider
+
 
 🧠 How It Works
 1. Profile Discovery
@@ -196,21 +199,21 @@ App will open in browser.
 
 This project:
 
-Uses SerpAPI to retrieve LinkedIn search results
-
-Does NOT use LinkedIn’s official API
-
-Does NOT automate message sending
-
-Does NOT auto-connect or auto-DM
-
-Users must manually copy and send messages.
-
-Ensure compliance with:
-
-LinkedIn Terms of Service
-
-Local data regulations
+    Uses SerpAPI to retrieve LinkedIn search results
+    
+    Does NOT use LinkedIn’s official API
+    
+    Does NOT automate message sending
+    
+    Does NOT auto-connect or auto-DM
+    
+    Users must manually copy and send messages.
+    
+    Ensure compliance with:
+    
+    LinkedIn Terms of Service
+    
+    Local data regulations
 
 This project is for educational and personal productivity use only.
 
@@ -234,57 +237,57 @@ Current Version: V1
 
 Features:
 
-Search filtering
-
-Message generation
-
-Real & Demo mode
-
-Editable outputs
-
+    Search filtering
+    
+    Message generation
+    
+    Real & Demo mode
+    
+    Editable outputs
+    
 Not yet implemented:
 
-CRM tracking
-
-Follow-up automation
-
-Message variants
-
-Rate limiting
-
-Multi-account support
-
-Deployment pipeline
+    CRM tracking
+    
+    Follow-up automation
+    
+    Message variants
+    
+    Rate limiting
+    
+    Multi-account support
+    
+    Deployment pipeline
 
 🚀 Future Roadmap
 
-Message A/B variants
-
-Follow-up generator
-
-Better prompt conditioning
-
-Structured output parsing
-
-Live message preview panel
-
-Deployment (Render / Railway / Vercel)
-
-CI/CD with GitHub Actions
-
-Analytics on response rate
+    Message A/B variants
+    
+    Follow-up generator
+    
+    Better prompt conditioning
+    
+    Structured output parsing
+    
+    Live message preview panel
+    
+    Deployment (Render / Railway / Vercel)
+    
+    CI/CD with GitHub Actions
+    
+    Analytics on response rate
 
 💡 Why This Project Exists
 
 Built as:
-
-A product thinking exercise
-
-A real-world AI application
-
-A career networking accelerator
-
-Designed with modular architecture to evolve beyond MVP.
+    
+    A product thinking exercise
+    
+    A real-world AI application
+    
+    A career networking accelerator
+    
+    Designed with modular architecture to evolve beyond MVP.
 
 🧠 Author
 
@@ -298,3 +301,4 @@ AI-native product experiences
 User engagement & lifecycle optimization
 
 Structured problem solving
+
