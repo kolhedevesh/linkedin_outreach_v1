@@ -315,8 +315,31 @@ def generate_profiles():
             with st.expander(f"Demo {i}: {profile['name']}", expanded=False):
                 st.write(f"**Role:** {profile['role']}")
                 st.write(f"**Company:** {profile['company']}")
-                
-                message = f"Hi {profile['name'].split()[0]},\n\nI noticed your work at {profile['company']}. {st.session_state.get('value_prop', '')}\n\nWould love to connect and explore potential synergies.\n\nThanks!"
+                # Use the LLM-backed generator for demo messages so we can test
+                # real prompt behavior instead of a static template.
+                from profile_generator import generate_outreach_message
+
+                demo_profile = {
+                    'name': profile.get('name', ''),
+                    'current_role': profile.get('role', ''),
+                    'company': profile.get('company', ''),
+                    'snippet': f"{profile.get('role', '')} at {profile.get('company', '')}",
+                    'key_skills': []
+                }
+
+                try:
+                    message = generate_outreach_message(
+                        user_background=st.session_state.get('user_background', ''),
+                        profile=demo_profile,
+                        relationship_goal=st.session_state.get('relationship_goal', ''),
+                        value_prop=st.session_state.get('value_prop', ''),
+                        tone=st.session_state.get('tone', 'Professional & Friendly'),
+                        cta_type=st.session_state.get('cta_type', 'Coffee/Chat Request'),
+                        personalization_level=3,
+                        mention_mutual=False,
+                    )
+                except Exception:
+                    message = f"Hi {profile['name'].split()[0]},\n\nI noticed your work at {profile['company']}. {st.session_state.get('value_prop', '')}\n\nWould love to connect and explore potential synergies.\n\nThanks!"
                 
                 st.divider()
                 
