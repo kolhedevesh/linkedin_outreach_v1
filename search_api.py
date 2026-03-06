@@ -5,6 +5,7 @@ Handles caching, error handling, and result normalization
 
 import os
 import requests
+import streamlit as st
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
@@ -16,13 +17,21 @@ class SearchAPIClient:
         Initialize Search API Client with SerpAPI
         
         Args:
-            serpapi_key: SerpAPI key (defaults to env var SERPAPI_KEY)
+            serpapi_key: SerpAPI key (defaults to Streamlit secrets SERPAPI_API_KEY)
         """
-        self.serpapi_key = serpapi_key or os.getenv("SERPAPI_KEY")
-        if not self.serpapi_key:
-            raise ValueError("SERPAPI_KEY not found. Set it in .env file")
+        self.serpapi_key = serpapi_key or self._get_secret("SERPAPI_API_KEY")
         self.cache = {}
         self.cache_ttl = 3600  # 1 hour cache TTL
+
+    @staticmethod
+    def _get_secret(key: str) -> str:
+        try:
+            value = st.secrets[key]
+        except Exception:
+            value = os.getenv(key)
+        if not value:
+            raise ValueError("Missing API key in Streamlit secrets")
+        return value
     
     def _get_cache_key(self, query: str) -> str:
         """Generate cache key from query"""

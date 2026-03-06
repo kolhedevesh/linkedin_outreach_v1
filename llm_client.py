@@ -1,12 +1,24 @@
 import requests
 import json
 import logging
+import os
+import streamlit as st
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "llama3"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def get_google_api_key() -> str:
+    try:
+        value = st.secrets["GOOGLE_API_KEY"]
+    except Exception:
+        value = os.getenv("GOOGLE_API_KEY")
+    if not value:
+        raise ValueError("Missing API key in Streamlit secrets")
+    return value
 
 
 def query_llama(prompt: str) -> str:

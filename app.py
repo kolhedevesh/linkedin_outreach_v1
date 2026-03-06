@@ -119,7 +119,7 @@ with tab1:
 
     with col2:
         st.markdown("**Industry** <span style='color:red'>*</span>", unsafe_allow_html=True)
-        industry_options = ["SaaS", "FinTech", "AI/ML", "Healthcare", "B2B", "EdTech", "Other"]
+        industry_options = ["SaaS", "FinTech", "AI/ML", "Healthcare", "B2B", "EdTech", "Sports & Entertainment", "Other"]
         industry_choice = st.multiselect("Industry", industry_options, key="industry_choice", label_visibility="collapsed")
         industry_custom = ""
         if "Other" in industry_choice:
