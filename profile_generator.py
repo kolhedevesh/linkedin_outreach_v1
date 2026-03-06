@@ -1,8 +1,12 @@
 """Generate personalized outreach messages and extract profile metadata"""
 
 import re
-from typing import Dict
+import logging
+from typing import Dict, Tuple, Any
 from llm_client import query_llama
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def parse_profile_metadata(title: str, snippet: str) -> Dict[str, str]:
@@ -149,48 +153,43 @@ def _base_prompt(
     personalization_level: int,
     mention_mutual: bool,
 ):
-    personalization_hint = {
-        1: "Keep very brief and generic",
-        2: "Basic personalization",
-        3: "Good balance of personal and concise",
-        4: "Deep personalization with multiple references",
-        5: "Highly personalized, detailed, reference their specific achievements"
-    }
+    prompt = f"""You are helping a professional write a LinkedIn outreach message.
 
-    prompt = f"""Generate a LinkedIn outreach message based on the context below.
+Target Profile:
+NAME: {profile.get('name', 'Professional')}
+ROLE: {profile.get('current_role', 'Unknown')}
+COMPANY: {profile.get('company', 'Unknown')}
+ABOUT: {profile.get('snippet', '')}
 
-CONTEXT:
-Your Background: {user_background or 'Not specified'}
-Value Proposition: {value_prop or 'Not specified'}
-Problem You Solve: {problem_solving or 'Not specified'}
-Achievements: {achievements or 'Not specified'}
-Interests: {interests or 'Not specified'}
+Sender Background:
+USER_BACKGROUND: {user_background or 'Not specified'}
 
-TARGET:
-- Name: {profile.get('name', 'Professional')}
-- Role: {profile.get('current_role', 'Unknown')}
-- Company: {profile.get('company', 'Unknown')}
-- Experience Level: {profile.get('experience_level', 'Unknown')}
-- Key Skills: {', '.join(profile.get('key_skills', []))}
-- Profile Summary: {profile.get('snippet', '')}
+Goal:
+USER_GOAL: {relationship_goal or 'Not specified'}
 
-OUTREACH PARAMETERS:
-- Goal: {relationship_goal}
-- Tone: {tone}
-- Call-to-Action: {cta_type}
-- Personalization Depth: {personalization_hint.get(personalization_level, 'Standard')}
-- Mention Mutual Connections: {'Yes' if mention_mutual else 'No'}
+Value Proposition:
+VALUE_PROPOSITION: {value_prop or 'Not specified'}
 
-GUIDELINES:
-- Write a concise, professional LinkedIn message (2-4 sentences max).
-- Reference something SPECIFIC from the profile or their role.
-- Lead with value/relevance, NOT with what you want.
-- Include a clear but soft CTA at the end (e.g., "Would love to connect" or "Let's chat sometime").
-- Match the requested tone and personalization depth.
-- Output ONLY the message itself, no preamble, meta-text, or explanations.
-- Do NOT include phrases like "Here's a message", "Let me know if...", or meta commentary.
-- Make it ready to copy-paste directly into LinkedIn DMs without editing.
-- Be authentic and conversational, not robotic.
+Additional Context:
+PROBLEM_SOLVING: {problem_solving or 'Not specified'}
+ACHIEVEMENTS: {achievements or 'Not specified'}
+INTERESTS: {interests or 'Not specified'}
+KEY_SKILLS: {', '.join(profile.get('key_skills', []))}
+EXPERIENCE_LEVEL: {profile.get('experience_level', 'Unknown')}
+TONE: {tone}
+CTA_TYPE: {cta_type}
+MENTION_MUTUAL: {'Yes' if mention_mutual else 'No'}
+
+Write a short LinkedIn message (80-100 words) that:
+- References the recipient's work or role specifically.
+- Shows genuine interest and relevance.
+- Avoids sounding generic or templated.
+- Ends with a light coffee/chat request.
+- Varies phrasing across outputs.
+
+Do NOT use placeholders.
+Do NOT repeat the same phrasing across outputs.
+Return ONLY the message text.
 """
     return prompt
 
@@ -205,7 +204,7 @@ def _variant_instructions(variant: str) -> str:
     return ""
 
 
-def generate_outreach_variants(
+def generate_outreach_variants_with_debug(
     user_background: str,
     profile: Dict,
     relationship_goal: str = "Network & Build Relationship",
@@ -217,7 +216,8 @@ def generate_outreach_variants(
     achievements: str = "",
     personalization_level: int = 3,
     mention_mutual: bool = True,
-):
+    return_debug: bool = False,
+) -> Tuple[Dict[str, str], Dict[str, Any], bool]:
     """
     Return 3 variants: short, medium, ultra.
     Falls back to simple templates if LLM fails.
@@ -236,7 +236,9 @@ def generate_outreach_variants(
         mention_mutual,
     )
 
-    variants = {}
+    variants: Dict[str, str] = {}
+    debug_data: Dict[str, Any] = {"prompts": {}, "responses": {}, "errors": {}}
+    used_fallback = False
     for key in ("short", "medium", "ultra"):
         # Add a compact few-shot example to encourage variability and strict use
         # of the provided profile fields. Keep examples short so prompts remain
@@ -250,13 +252,19 @@ def generate_outreach_variants(
         )
 
         prompt = base + examples + "\n" + _variant_instructions(key) + "\n\nRespond with ONLY the message text."
+        debug_data["prompts"][key] = prompt
+        logger.info("LLM prompt (variant=%s): %s", key, prompt)
         try:
-            text = query_llama(prompt)
+            text = query_llama(prompt, temperature=0.8, max_output_tokens=180)
             if not text or text.strip() == "":
                 raise RuntimeError("Empty response")
+            debug_data["responses"][key] = text
             text = sanitize_model_output(text)
             variants[key] = text
-        except Exception:
+        except Exception as e:
+            used_fallback = True
+            debug_data["errors"][key] = str(e)
+            logger.warning("Using fallback generator")
             # fallback template generation (used when LLM is unavailable or errors)
             name = profile.get("name", "there")
             role = profile.get("current_role", "")
@@ -290,6 +298,42 @@ def generate_outreach_variants(
                     f"{(' at ' + comp) if comp else ''}{(f' — experience with {skill_str}' ) if skill_str else ''}. "
                     f"{value_prop or ''} Would you be open to {cta_phrase} to explore this?\n\nThanks,\n[Your Name]"
                 )
+    if return_debug:
+        return variants, debug_data, used_fallback
+    return variants, debug_data, used_fallback
+
+
+def generate_outreach_variants(
+    user_background: str,
+    profile: Dict,
+    relationship_goal: str = "Network & Build Relationship",
+    value_prop: str = "",
+    tone: str = "Professional & Friendly",
+    cta_type: str = "Coffee/Chat Request",
+    interests: str = "",
+    problem_solving: str = "",
+    achievements: str = "",
+    personalization_level: int = 3,
+    mention_mutual: bool = True,
+):
+    """
+    Return 3 variants: short, medium, ultra.
+    Falls back to simple templates if LLM fails.
+    """
+    variants, _, _ = generate_outreach_variants_with_debug(
+        user_background=user_background,
+        profile=profile,
+        relationship_goal=relationship_goal,
+        value_prop=value_prop,
+        tone=tone,
+        cta_type=cta_type,
+        interests=interests,
+        problem_solving=problem_solving,
+        achievements=achievements,
+        personalization_level=personalization_level,
+        mention_mutual=mention_mutual,
+        return_debug=False,
+    )
     return variants
 
 

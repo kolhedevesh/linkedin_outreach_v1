@@ -8,6 +8,7 @@ load_dotenv()
 st.set_page_config(page_title="LinkedIn Outreach Assistant", layout="wide")
 st.title("🔗 LinkedIn Outreach Assistant")
 st.write("Find LinkedIn profiles and generate personalized outreach messages")
+debug_mode = st.checkbox("Show Debug Logs")
 
 # Minimal presets
 PRESETS = {
@@ -243,7 +244,7 @@ def generate_profiles():
                 if search_results:
                     st.success(f"✅ Found {len(search_results)} profiles")
                     
-                    from profile_generator import parse_profile_metadata, generate_outreach_variants
+                    from profile_generator import parse_profile_metadata, generate_outreach_variants_with_debug
 
                     # Show all results but display nicely
                     for i, result in enumerate(search_results, 1):
@@ -265,7 +266,7 @@ def generate_profiles():
                             
                             # Generate message
                             try:
-                                variants = generate_outreach_variants(
+                                variants, debug_data, used_fallback = generate_outreach_variants_with_debug(
                                     user_background=user_background,
                                     profile={**metadata, 'snippet': result.get('snippet','')},
                                     relationship_goal=st.session_state.get("relationship_goal", ""),
@@ -276,9 +277,21 @@ def generate_profiles():
                                     problem_solving="",
                                     achievements="",
                                     personalization_level=3,
-                                    mention_mutual=True
+                                    mention_mutual=True,
+                                    return_debug=debug_mode,
                                 )
                                 message = variants.get("medium", "")
+                                if used_fallback:
+                                    st.warning("⚠️ LLM unavailable — using fallback message generator.")
+                                if debug_mode:
+                                    with st.expander("Debug Logs", expanded=False):
+                                        st.markdown("**Prompt (medium):**")
+                                        st.code(debug_data.get("prompts", {}).get("medium", ""))
+                                        st.markdown("**Response (medium):**")
+                                        st.code(debug_data.get("responses", {}).get("medium", ""))
+                                        if debug_data.get("errors", {}).get("medium"):
+                                            st.markdown("**Error (medium):**")
+                                            st.code(debug_data.get("errors", {}).get("medium"))
                             except Exception as e:
                                 message = f"Hi {profile_name.split()[0]},\n\nI noticed your work in {industry}. {value_prop}\n\nWould love to connect.\n\nThanks!"
                             
@@ -317,7 +330,7 @@ def generate_profiles():
                 st.write(f"**Company:** {profile['company']}")
                 # Use the LLM-backed generator for demo messages so we can test
                 # real prompt behavior instead of a static template.
-                from profile_generator import generate_outreach_message
+                from profile_generator import generate_outreach_variants_with_debug
 
                 demo_profile = {
                     'name': profile.get('name', ''),
@@ -328,7 +341,7 @@ def generate_profiles():
                 }
 
                 try:
-                    message = generate_outreach_message(
+                    variants, debug_data, used_fallback = generate_outreach_variants_with_debug(
                         user_background=st.session_state.get('user_background', ''),
                         profile=demo_profile,
                         relationship_goal=st.session_state.get('relationship_goal', ''),
@@ -337,7 +350,20 @@ def generate_profiles():
                         cta_type=st.session_state.get('cta_type', 'Coffee/Chat Request'),
                         personalization_level=3,
                         mention_mutual=False,
+                        return_debug=debug_mode,
                     )
+                    message = variants.get("medium", "")
+                    if used_fallback:
+                        st.warning("⚠️ LLM unavailable — using fallback message generator.")
+                    if debug_mode:
+                        with st.expander("Debug Logs", expanded=False):
+                            st.markdown("**Prompt (medium):**")
+                            st.code(debug_data.get("prompts", {}).get("medium", ""))
+                            st.markdown("**Response (medium):**")
+                            st.code(debug_data.get("responses", {}).get("medium", ""))
+                            if debug_data.get("errors", {}).get("medium"):
+                                st.markdown("**Error (medium):**")
+                                st.code(debug_data.get("errors", {}).get("medium"))
                 except Exception:
                     message = f"Hi {profile['name'].split()[0]},\n\nI noticed your work at {profile['company']}. {st.session_state.get('value_prop', '')}\n\nWould love to connect and explore potential synergies.\n\nThanks!"
                 
